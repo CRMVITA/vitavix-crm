@@ -904,12 +904,10 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--t);min-h
         </div>
       </div>
       <!-- Modal Lead Manual -->
-      <div class="modal" id="lead-manual-m" style="display:none;">
-        <div class="mc" style="max-width:480px;">
-          <div class="mh"><span>➕ Registrar Lead Manual</span><span class="mc-x" onclick="document.getElementById('lead-manual-m').style.display='none'">✕</span></div>
-          <div class="mb">
-            <div class="fl full"><label>Nome *</label><input id="lm-nome" type="text" placeholder="Nome do lead"/></div>
-            <div class="fl full"><label>Telefone *</label><input id="lm-tel" type="tel" placeholder="(11) 99999-9999"/></div>
+      <div class="mb" id="lead-manual-m" style="display:none;"><div class="mo"><h2>➕ Registrar Lead Manual</h2>
+          <div class="fg2">
+            <div class="fl full"><label>Nome <span style="color:var(--red)">*</span></label><input id="lm-nome" type="text" placeholder="Nome do lead"/></div>
+            <div class="fl full"><label>Telefone <span style="color:var(--red)">*</span></label><input id="lm-tel" type="tel" placeholder="(11) 99999-9999"/></div>
             <div class="fl full"><label>Campanha</label>
               <select id="lm-campanha">
                 <option value="Manual">Manual</option>
@@ -917,13 +915,12 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--t);min-h
                 <option value="MedSênior">MedSênior</option>
               </select>
             </div>
-            <div class="fl full"><label>Corretor (deixe vazio para roleta automática)</label>
+            <div class="fl full"><label>Corretor (vazio = roleta automática)</label>
               <select id="lm-corretor"><option value="">— Roleta automática —</option></select>
             </div>
           </div>
-          <div class="mf"><button class="badd" onclick="saveLeadManual()">Salvar Lead</button></div>
-        </div>
-      </div>
+          <div class="sr"><button class="bg" onclick="saveLeadManual()">Salvar Lead</button><button class="bc" onclick="closeM('lead-manual-m')">Cancelar</button></div>
+        </div></div>
       <!-- ══════════════ FIM CENTRAL DE LEADS ══════════════ -->
       <div class="sec" id="s-usuarios"><div class="ph"><div><div class="ptit">Gestão de Usuários</div></div><button class="badd" onclick="openAddUser()">+ Novo Corretor</button></div><div class="umc"><h3>🔐 Corretores Cadastrados</h3><div id="users-l"></div></div></div>
       <div class="sec" id="s-config">
@@ -3060,7 +3057,7 @@ function openAddLeadManual() {
     sel.innerHTML = '<option value="">— Roleta automática —</option>' +
       (cUsers||[]).map(u => `<option value="${u.name}">${u.name}</option>`).join('');
   }
-  document.getElementById('lead-manual-m').style.display = 'flex';
+  document.getElementById('lead-manual-m').style.display = 'block';
 }
 
 async function saveLeadManual() {
@@ -3082,7 +3079,7 @@ async function saveLeadManual() {
     created_at: new Date().toISOString()
   });
   if (error) { toast('Erro: ' + error.message, 'error'); return; }
-  document.getElementById('lead-manual-m').style.display = 'none';
+  closeM('lead-manual-m');
   toast('✅ Lead registrado — atribuído a ' + (corretor || 'nenhum corretor'));
   await renderCentralLeads();
 }
