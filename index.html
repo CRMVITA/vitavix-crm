@@ -93,6 +93,8 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--t);min-h
 .kcn{font-weight:600;margin-bottom:2px;}.kco{font-size:11px;color:var(--t3);}
 .kcv{font-size:12px;color:var(--p);font-weight:600;margin-top:4px;}.kci{font-size:11px;color:var(--t3);margin-top:2px;}
 .kct{font-size:10px;background:#f0f4f0;color:#444;border-radius:6px;padding:2px 6px;margin-top:6px;display:inline-block;}
+.kstage-sel{width:100%;margin-top:8px;padding:5px 7px;border:1px solid var(--b);border-radius:7px;font-size:11px;font-weight:600;color:var(--p);background:#f8fbf8;outline:none;cursor:pointer;font-family:inherit;transition:border .15s;}
+.kstage-sel:focus{border-color:var(--p);}
 .kca{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;}
 .kbtn{border:none;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;}
 .kbg{background:#e8f5ee;color:#1a6b3c;}.kbg:hover{background:#1a6b3c;color:#fff;}
@@ -1893,7 +1895,7 @@ function renderKanban(){
   document.getElementById('kanban').innerHTML=STAGES.map((st,i)=>{
     const cards=cCli.filter(c=>c.etapa===st);
     return `<div class="kcol"><div class="ch" style="background:${SC[i]}">${st}<span class="cc">${cards.length}</span></div><div class="cb" data-stage="${st}" ondragover="event.preventDefault();this.classList.add('do')" ondragleave="this.classList.remove('do')" ondrop="dropCard(event,'${st}')">
-      ${cards.map(c=>`<div class="kcard" draggable="true" data-id="${c.id}" ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()"><div class="kcb">👤 ${c.corretor?c.corretor.split(' ')[0]:'—'}</div><div class="kcn">${c.nome}</div>${c.operadora?`<div class="kco">🏥 ${c.operadora}</div>`:''}${c.modalidade?`<div class="kci" style="font-size:10px;background:#e6f0fb;color:#1a5f9a;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:2px;">${c.modalidade}</div>`:''}${c.valor?`<div class="kcv">R$ ${Number(c.valor).toLocaleString('pt-BR')}/mês</div>`:''}${c.plano?`<div class="kci">📋 ${c.plano}</div>`:''}${c.origem?`<div class="kci">🔗 ${c.origem}</div>`:''}<span class="kct">📞 ${c.tel||'—'}</span><div class="kca">${st==='Follow-up'?`<button class="kbtn kbr" onclick="openFUCard('${c.id}')">📱 Follow-up</button>`:''}<button class="kbtn kbg" onclick="openEditCli('${c.id}',event)" style="margin-top:4px;width:100%;background:#e8f5ee;color:#1a6b3c;border:none;">✏️ Editar</button>${(cu&&(cu.role==='admin'||cu.role==='administrador'))?`<button class="kbtn kbr" onclick="delCliKanban('${c.id}','${c.nome.replace(/'/g,'').replace(/`/g,'')}',event)" style="margin-top:4px;width:100%;background:#fce8e8;color:#c02020;border:none;">🗑️ Excluir</button>`:''}</div></div>`).join('')}
+      ${cards.map(c=>`<div class="kcard" draggable="true" data-id="${c.id}" ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()"><div class="kcb">👤 ${c.corretor?c.corretor.split(' ')[0]:'—'}</div><div class="kcn">${c.nome}</div>${c.operadora?`<div class="kco">🏥 ${c.operadora}</div>`:''}${c.modalidade?`<div class="kci" style="font-size:10px;background:#e6f0fb;color:#1a5f9a;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:2px;">${c.modalidade}</div>`:''}${c.valor?`<div class="kcv">R$ ${Number(c.valor).toLocaleString('pt-BR')}/mês</div>`:''}${c.plano?`<div class="kci">📋 ${c.plano}</div>`:''}${c.origem?`<div class="kci">🔗 ${c.origem}</div>`:''}<span class="kct">📞 ${c.tel||'—'}</span><select class="kstage-sel" onchange="changeEtapaSelect('${c.id}',this.value,this)" onclick="event.stopPropagation()">${STAGES.map(s=>`<option value="${s}"${s===c.etapa?' selected':''}>${s}</option>`).join('')}</select><div class="kca">${st==='Follow-up'?`<button class="kbtn kbr" onclick="openFUCard('${c.id}')">📱 Follow-up</button>`:''}<button class="kbtn kbg" onclick="openEditCli('${c.id}',event)" style="margin-top:4px;width:100%;background:#e8f5ee;color:#1a6b3c;border:none;">✏️ Editar</button>${(cu&&(cu.role==='admin'||cu.role==='administrador'))?`<button class="kbtn kbr" onclick="delCliKanban('${c.id}','${c.nome.replace(/'/g,'').replace(/`/g,'')}',event)" style="margin-top:4px;width:100%;background:#fce8e8;color:#c02020;border:none;">🗑️ Excluir</button>`:''}</div></div>`).join('')}
     </div></div>`;
   }).join('');
 }
@@ -1948,6 +1950,21 @@ async function dropCard(e,to){
   else if(to==='Venda Fechada'){openFE(cli.id);}
   else toast('Lead movido para '+to);
   renderKanban();dci=null;
+}
+async function changeEtapaSelect(id,to,selEl){
+  const cli=cCli.find(c=>c.id===id);if(!cli||cli.etapa===to)return;
+  const from=cli.etapa;
+  selEl.disabled=true;
+  const {error}=await sb.from('clients').update({etapa:to}).eq('id',id);
+  selEl.disabled=false;
+  if(error){toast('Erro ao mover: '+error.message,'error');selEl.value=from;return;}
+  cli.etapa=to;
+  const h={tipo:'Movimentação',descricao:`Lead movido de "${from}" para "${to}"`,cliente:cli.nome,corretor:cu.name,date:now()};
+  const {data:hs}=await sb.from('historico').insert(h).select().single();if(hs)cHist.unshift(hs);
+  if(to==='Follow-up'){fuCli=cli;openFU(cli);}
+  else if(to==='Venda Fechada'){openFE(cli.id);}
+  else toast(`✅ ${cli.nome} → ${to}`);
+  renderKanban();
 }
 function openFUCard(id){const c=cCli.find(x=>x.id===id);if(c){fuCli=c;openFU(c);}}
 // Mensagens de follow-up editáveis (persistem na sessão)
@@ -3559,8 +3576,19 @@ async function lstDoImport(){
     const cor=corNames[gi];
     const parseRow=(r,tipo)=>{
       const g=k=>m[k]?String(r[m[k]]||'').trim():'';
-      let nasc=g('nascimento');
-      if(nasc&&nasc.includes('/')){const p=nasc.split('/');if(p.length===3)nasc=p[2].length===4?`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`:null;}
+      const rawNasc=m['nascimento']!=null?r[m['nascimento']]:'';
+      let nasc='';
+      if(rawNasc!==''&&rawNasc!=null){
+        if(typeof rawNasc==='number'||(String(rawNasc).length<=5&&!isNaN(Number(rawNasc))&&!String(rawNasc).includes('/'))){
+          const serial=Number(rawNasc);
+          if(serial>1000&&serial<80000){const d=new Date(Math.round((serial-25569)*86400*1000));if(!isNaN(d.getTime()))nasc=d.toISOString().slice(0,10);}
+        } else {
+          const s=String(rawNasc).trim().split(' ')[0].split('T')[0];
+          if(s.includes('/')){const p=s.split('/');if(p.length===3){let ano=p[2],mes=p[1],dia=p[0];if(ano.length===2)ano='19'+ano;if(ano.length===4&&Number(mes)>=1&&Number(mes)<=12&&Number(dia)>=1&&Number(dia)<=31)nasc=`${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`;}}
+          else if(s.includes('-')){const p=s.split('-');if(p.length===3){if(p[0].length===4)nasc=s;else if(p[2].length===4)nasc=`${p[2]}-${p[1].padStart(2,'0')}-${p[0].padStart(2,'0')}`;}}
+        }
+        if(nasc){const td=new Date(nasc);if(isNaN(td.getTime())||td.getFullYear()<1900||td.getFullYear()>2100)nasc='';}
+      }
       return {nome:g('nome'),tipo_associado:tipo,num_associado:g('num_associado'),cpf:g('cpf'),entidade:g('entidade'),nascimento:nasc||null,tel:g('tel'),tel2:g('tel2'),nome_plano:g('nome_plano'),data_exclusao:g('data_exclusao')||null,email:g('email'),corretor:cor,status:'Novo'};
     };
     batch.push(parseRow(grp.titular,'T'));
