@@ -475,7 +475,7 @@ body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--t);min-h
         </div>
         <div class="dg"><div class="dc"><h3>Performance por Corretor</h3><div id="cor-bars-an"></div></div><div class="dc"><h3>Atividade Recente</h3><div id="act-list-an"></div></div></div>
       </div>
-      <div class="sec" id="s-pipeline"><div class="ph"><div><div class="ptit">Pipeline de Vendas</div><div class="psub">Arraste os cards entre as etapas</div></div><button class="badd" onclick="openAddCli()">+ Adicionar Lead</button></div><div style="overflow-x:auto;padding-bottom:1rem;display:flex;gap:12px;" id="kanban"></div></div>
+      <div class="sec" id="s-pipeline"><div class="ph"><div><div class="ptit">Pipeline de Vendas</div><div class="psub">Arraste os cards entre as etapas</div></div><button class="badd" onclick="openAddCli()">+ Adicionar Lead</button></div><div style="margin-bottom:1rem;"><input type="text" id="pipe-search" placeholder="🔍 Buscar cliente no pipeline..." oninput="filterKanban()" style="width:100%;max-width:360px;padding:8px 12px;border:1px solid var(--b);border-radius:8px;font-size:14px;outline:none;font-family:inherit;" onfocus="this.style.borderColor='var(--p)'" onblur="this.style.borderColor='var(--b)'"/></div><div style="overflow-x:auto;padding-bottom:1rem;display:flex;gap:12px;" id="kanban"></div></div>
       <div class="sec" id="s-clientes">
         <div class="ph"><div><div class="ptit">Clientes</div><div class="psub">Gerencie todos os seus clientes</div></div><button class="badd" onclick="openAddCli()">+ Novo Lead</button></div>
         <div class="tbar"><button class="tbtn active" onclick="swTab('leads',this)">📋 Leads Ativos</button><button class="tbtn" onclick="swTab('fechados',this)">🏆 Fechados</button><button class="tbtn" onclick="swTab('perdidos',this)">❌ Perdidos</button></div>
@@ -1898,6 +1898,15 @@ function renderKanban(){
       ${cards.map(c=>`<div class="kcard" draggable="true" data-id="${c.id}" ondragstart="startDrag(event,'${c.id}')" ondragend="endDrag()"><div class="kcb">👤 ${c.corretor?c.corretor.split(' ')[0]:'—'}</div><div class="kcn">${c.nome}</div>${c.operadora?`<div class="kco">🏥 ${c.operadora}</div>`:''}${c.modalidade?`<div class="kci" style="font-size:10px;background:#e6f0fb;color:#1a5f9a;border-radius:4px;padding:1px 5px;display:inline-block;margin-top:2px;">${c.modalidade}</div>`:''}${c.valor?`<div class="kcv">R$ ${Number(c.valor).toLocaleString('pt-BR')}/mês</div>`:''}${c.plano?`<div class="kci">📋 ${c.plano}</div>`:''}${c.origem?`<div class="kci">🔗 ${c.origem}</div>`:''}<span class="kct">📞 ${c.tel||'—'}</span><select class="kstage-sel" onchange="changeEtapaSelect('${c.id}',this.value,this)" onclick="event.stopPropagation()">${STAGES.map(s=>`<option value="${s}"${s===c.etapa?' selected':''}>${s}</option>`).join('')}</select><div class="kca">${st==='Follow-up'?`<button class="kbtn kbr" onclick="openFUCard('${c.id}')">📱 Follow-up</button>`:''}<button class="kbtn kbg" onclick="openEditCli('${c.id}',event)" style="margin-top:4px;width:100%;background:#e8f5ee;color:#1a6b3c;border:none;">✏️ Editar</button>${(cu&&(cu.role==='admin'||cu.role==='administrador'))?`<button class="kbtn kbr" onclick="delCliKanban('${c.id}','${c.nome.replace(/'/g,'').replace(/`/g,'')}',event)" style="margin-top:4px;width:100%;background:#fce8e8;color:#c02020;border:none;">🗑️ Excluir</button>`:''}</div></div>`).join('')}
     </div></div>`;
   }).join('');
+}
+function filterKanban(){
+  const q=(document.getElementById('pipe-search')?.value||'').toLowerCase().trim();
+  document.querySelectorAll('#kanban .kcard').forEach(card=>{
+    const nome=card.querySelector('.kcn')?.textContent.toLowerCase()||'';
+    const tel=card.querySelector('.kct')?.textContent.toLowerCase()||'';
+    const op=card.querySelector('.kco')?.textContent.toLowerCase()||'';
+    card.style.display=(!q||nome.includes(q)||tel.includes(q)||op.includes(q))?'':'none';
+  });
 }
 function openEditCli(id,event){
   if(event)event.stopPropagation();
